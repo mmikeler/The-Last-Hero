@@ -11,7 +11,7 @@ class Constructor{
     }
     game = {
         playerSpeed: 2,
-        enemiesQty: 1,
+        enemiesQty: 10,
         enemyColor: 'black',
         group: 1,
         enemySpeed: 30,
@@ -31,15 +31,15 @@ class Constructor{
             y: 0,
         },
         gun: {
-            name: 'Pistol',
-            auto: false,
-            rateOfFire: 1000,
-            rateOfFireTimer: 0,
-            fullAmmo: 6,
-            ammo: 6,
-            reload: false,
-            reloadTime: 1000,
-            reloadStart: 0,
+            name: 'Pistol',     // Название
+            auto: true,        // Режим авто
+            rateOfFire: 500,   // Скорострельность
+            rateOfFireTimer: 0, // Таймер расчёта скорострельности
+            fullAmmo: 6,        // Ёмкость магазина
+            ammo: 6,            // Кол-во патронов в обойме
+            reload: false,      // Статус перезарядки
+            reloadTime: 1000,   // Время перезарядки
+            reloadStart: 0,     // Таймер расчёта перезарядки
         },
         armor:{}
     }
@@ -190,8 +190,10 @@ class Constructor{
         let speed = 1000;
         let speedX = startX - vectorX;
         let speedY = startY - vectorY;
+        // Добавляем пульку
         let bullet = [ startX, startY, -speedX, -speedY, speed ];
         this.objects.bullets.push(bullet);
+        // Отмечаем время выстрела
         this.player.gun.rateOfFireTimer = new Date().getTime();
     }
 
@@ -407,6 +409,8 @@ class Constructor{
         document.addEventListener("keydown", keyDownHandler, false);
         document.addEventListener("keyup", keyUpHandler, false);
         document.addEventListener("mousedown", mouseDownHandler, false);
+        document.addEventListener("mouseup", mouseUpHandler, false);
+        canvas.addEventListener("mousemove", onmouseMoveHandler, false);
 
         this.setInterface();
 
@@ -438,12 +442,34 @@ function keyUpHandler(e)
 }
 
 //================================ SHOOT
+var shooting;
+var mouseX;
+var mouseY;
+function onmouseMoveHandler(e){
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+}
 function mouseDownHandler(e){
     if( !e.target.closest('canvas') )
         return;
-
+    
     if(e.which == 1){
-        d.setBullet(e.clientX,e.clientY);
+        d.setBullet(mouseX,mouseY);
+        if( d.player.gun.auto ){
+            shooting = setInterval(()=>{
+                d.setBullet(mouseX,mouseY);
+            }, d.player.gun.rateOfFire )
+        }
+        else{
+            d.setBullet(mouseX,mouseY);
+        }
+    }
+}
+function mouseUpHandler(e){
+    if( !e.target.closest('canvas') )
+        return;
+    if(e.which == 1){
+        clearInterval(shooting);
     }
 }
 
