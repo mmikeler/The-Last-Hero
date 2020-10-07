@@ -13,7 +13,7 @@ class Constructor{
         playerSpeed: 2,
         enemiesQty: 10,
         enemyColor: 'black',
-        group: 1,
+        group: 10,
         enemySpeed: 30,
         enemySpamTime: 1000,
         treckColor: "rgba(212,0,0,0.5)",
@@ -363,10 +363,10 @@ class Constructor{
     }
 
     setNextRound(){
-        this.game.enemiesQty = this.game.group += 10; 
+        this.game.enemiesQty = this.game.group = this.game.group*2;
         this.game.timer = new Date().getTime();
-        this.game.enemySpeed += 2;
-        this.game.enemySpamTime -= 100;
+        this.game.enemySpeed += 1;
+        this.game.enemySpamTime -= 50;
         this.game.round += 1;
     }
 
@@ -458,7 +458,7 @@ function mouseDownHandler(e){
         if( d.player.gun.auto ){
             shooting = setInterval(()=>{
                 d.setBullet(mouseX,mouseY);
-            }, d.player.gun.rateOfFire )
+            }, 100 )
         }
         else{
             d.setBullet(mouseX,mouseY);
