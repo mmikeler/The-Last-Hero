@@ -10,18 +10,21 @@ class Constructor{
         indY: (window.innerHeight - 700)/2, // определение координат клика
     }
     game = {
-        playerSpeed: 2,
         enemiesQty: 10,
         enemyColor: 'black',
         group: 10,
-        enemySpeed: 30,
+        enemySpeed: 30, // bonus in sec
+        enemyHealth: 1,
         enemySpamTime: 1000,
         treckColor: "rgba(212,0,0,0.5)",
         timer: new Date().getTime(),
         round: 1,
         roundStart: false,
+        setBonusAt: 10,
+        kills: 0,
     }
-    player= {
+    player = {
+        speed: 2, // pix per sec
         model: {
             color: 'blue',
             size: 10,
@@ -30,31 +33,47 @@ class Constructor{
             x: 0,
             y: 0,
         },
-        gun: {
-            name: 'Pistol',     // Название
-            auto: true,        // Режим авто
-            rateOfFire: 500,   // Скорострельность
-            rateOfFireTimer: 0, // Таймер расчёта скорострельности
-            fullAmmo: 6,        // Ёмкость магазина
-            ammo: 6,            // Кол-во патронов в обойме
-            reload: false,      // Статус перезарядки
-            reloadTime: 1000,   // Время перезарядки
-            reloadStart: 0,     // Таймер расчёта перезарядки
-        },
         armor:{}
+    }
+    weapon = {
+        auto: true,         // Режим авто
+        damage: 1,          // Урон
+        rateOfFire: 1000,   // Скорострельность
+        rateOfFireTimer: 0, // Таймер расчёта скорострельности
+        fullAmmo: 6,        // Ёмкость магазина
+        ammo: 6,            // Кол-во патронов в обойме
+        reload: false,      // Статус перезарядки
+        reloadTime: 1000,   // Время перезарядки
+        reloadStart: 0,     // Таймер расчёта перезарядки
     }
     objects = {
         bullets: [],
         enemies: [],
         trecks: [],
+        loot: [],
+    }
+    bonus = {
+        speed: {
+            name: 'movespeed',
+            num: 0.1,
+            src: './image/loot/boot.svg',
+        },
+        fullAmmo: {
+            name: 'fullammo',
+            num: 1,
+            src: './image/loot/bullet.svg',
+        },
+        rateOfFire: {
+            name: 'rateoffire',
+            num: 50,
+            src: './image/loot/rateoffire.svg',
+        }
     }
     controlls = {
         left:false,
         top: false,
         right: false,
         bottom: false,
-        reload: false,
-        shoot: false,
     }
 
     //================================================ CONTROLLS
@@ -96,32 +115,34 @@ class Constructor{
             return true;
     }
 
-    checkWallCollision(){ // Движение игрока + проверка на столкновения
-        let speed = this.game.playerSpeed;
+    checkCollision(){ // Движение игрока + проверка на столкновения
+        let speed = this.player.speed;
+        let px = this.player.pos.x;
+        let py = this.player.pos.y;
         if(this.controlls.top){    
-            let newpos = this.player.pos.y - speed;
+            let newpos = py - speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.y = newpos;
         }
         if(this.controlls.bottom){
-            let newpos = this.player.pos.y + speed;
+            let newpos = py + speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.y = newpos;
         }
         if(this.controlls.left){
-            let newpos = this.player.pos.x - speed;
+            let newpos = px - speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.x = newpos;
         }
         if(this.controlls.right){
-            let newpos = this.player.pos.x + speed;
+            let newpos = px + speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.x = newpos;
         }
     }
 
     setPlayer(ctx){
-        this.checkWallCollision();
+        this.checkCollision();
         this.displayReload(ctx);
 
         ctx.beginPath();
@@ -139,7 +160,7 @@ class Constructor{
 
     //=================================== BULLETS && WEAPON
     displayReload(ctx){
-        if(this.player.gun.reload)
+        if(this.weapon.reload)
         {
             ctx.beginPath();
             ctx.arc(
@@ -157,31 +178,31 @@ class Constructor{
     }
 
     weaponReload(){
-        if( this.player.gun.ammo === 0 && !this.player.gun.reload )
+        if( this.weapon.ammo === 0 && !this.weapon.reload )
         {
-            this.player.gun.reloadStart = new Date().getTime();
-            this.player.gun.reload = true;
+            this.weapon.reloadStart = new Date().getTime();
+            this.weapon.reload = true;
         }
-        else if( this.player.gun.ammo === 0 && this.player.gun.reload )
+        else if( this.weapon.ammo === 0 && this.weapon.reload )
         {
             let now = new Date().getTime();
-            if( now - this.player.gun.reloadStart > this.player.gun.reloadTime)
+            if( now - this.weapon.reloadStart > this.weapon.reloadTime)
             {
-                this.player.gun.ammo = this.player.gun.fullAmmo;
-                this.player.gun.reload = false;
+                this.weapon.ammo = this.weapon.fullAmmo;
+                this.weapon.reload = false;
             }
         }
     }
     
     setBullet(x,y){
-        if(this.player.gun.reload || this.player.gun.ammo <= 0)
+        if(this.weapon.reload || this.weapon.ammo <= 0)
             return;
         // Проверяем скорострельность
         let now = new Date().getTime();
-        if(now - this.player.gun.rateOfFireTimer < this.player.gun.rateOfFire)
+        if(now - this.weapon.rateOfFireTimer < this.weapon.rateOfFire)
             return;
         // Вычитаем из обоймы
-        this.player.gun.ammo--;
+        this.weapon.ammo--;
         // Делаем пульку
         let startX = this.player.pos.x;
         let startY = this.player.pos.y;
@@ -194,28 +215,36 @@ class Constructor{
         let bullet = [ startX, startY, -speedX, -speedY, speed ];
         this.objects.bullets.push(bullet);
         // Отмечаем время выстрела
-        this.player.gun.rateOfFireTimer = new Date().getTime();
+        this.weapon.rateOfFireTimer = new Date().getTime();
     }
 
     checkEnemyHit(x,y){
-        let hit = false;
+        let action = false;
         let die = {};
+        let damage = this.weapon.damage;
         this.objects.enemies.forEach( function(e,ind,obj){
             if( x > e[0] - 20 && x < e[0] + 20 && y > e[1] - 20 && y < e[1] + 20 ){
-                obj.splice(ind,1);
-                hit = true;
-                die = { x:e[0], y:e[1] };
+                if( e[4] - damage <= 0 ){
+                    obj.splice(ind,1);
+                    action = 'die';
+                    die = { x:e[0], y:e[1] };
+                }else{
+                    e[4] -= damage;
+                    action = 'hit';
+                }
             }
         })
-        if(hit){
+        if(action == 'die'){
             this.setTreck(die.x, die.y);
             this.checkRoundEnd();
+            return true;
+        }
+        else if(action == 'hit'){
             return true;
         }
         else{
             return false;
         }
-            
     }
 
     moveBullets(){
@@ -276,7 +305,7 @@ class Constructor{
 
     setEnemy(){
         let random = this.randomEnemyStartPos();
-        let enemy = [ random.x, random.y, 0, 0 ];
+        let enemy = [ random.x, random.y, 0, 0, this.game.enemyHealth ];
         this.objects.enemies.push(enemy);
     }
 
@@ -317,7 +346,13 @@ class Constructor{
 
     //======================================== TRECKS
     setTreck(x,y){
-        this.objects.trecks.push([x,y]);
+        this.game.kills++;
+        if( this.game.kills % this.game.setBonusAt == 0 && this.game.kills !== 0 ){
+            this.addLoot(x,y);
+        }
+        else{
+            this.objects.trecks.push([x,y]);
+        }
     }
 
     trecks(ctx){
@@ -336,6 +371,75 @@ class Constructor{
         })
     }
 
+    // ============================================== LOOT && BONUSES
+    addLoot(x,y){
+        let bonusCount = Object.keys( this.bonus );
+        let randIndex = Math.floor( Math.random()*bonusCount.length );
+        let bonus = this.bonus[bonusCount[randIndex]];
+        let item = {
+            posX: x,
+            posY: y,
+            obj: bonus,
+        };
+        this.objects.loot.push(item);
+    }
+
+    loot(ctx){
+        if( this.objects.loot.length <= 0 ) return;
+
+        let px = this.player.pos.x;
+        let py = this.player.pos.y;
+        let bonus = false;
+        
+        this.objects.loot.forEach((l,ind,obj) => {
+            if( px < l.posX + 30 && px > l.posX && py < l.posY + 30 && py > l.posY ){
+                obj.splice(ind,1);
+                bonus = l.obj;
+            }
+            else{
+                let image = new Image(30, 30);
+                image.src = l.obj.src;
+                
+                // ctx.shadowColor = '333';
+                // ctx.shadowOffsetX = 2;
+                // ctx.shadowOffsetY = 2;
+                // ctx.shadowBlur = 15;
+                ctx.strokeStyle = '#555';
+                ctx.beginPath();
+                ctx.arc(
+                    l.posX + 15,
+                    l.posY + 15,
+                    20,
+                    0,
+                    Math.PI*2, false
+                );
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.closePath();
+                ctx.stroke();
+                
+                ctx.drawImage(image, l.posX, l.posY, 30, 30);
+            }
+        })
+
+        if(bonus){
+            this.setBonus(bonus);
+        }
+    }
+
+    setBonus(bonus){
+        if( bonus.name == 'movespeed' ){
+            this.player.speed += bonus.num;
+        }
+        else if( bonus.name == 'fullammo' ){
+            this.weapon.fullAmmo += bonus.num;
+        }
+        else if( bonus.name == 'rateoffire' ){
+            this.weapon.rateOfFire -= bonus.num;
+        }
+    }
+
+    // Расчёт шага скорости движения объекта
     getStep(startX, startY, endX, endY, speed){
         let catX = endX - startX;
         let catY = endY - startY;
@@ -354,10 +458,10 @@ class Constructor{
     checkRoundEnd(){
         if(this.objects.enemies.length === 0){
             setTimeout(() => {
-                if(confirm('One more?')){
-                    this.resetControll();
+                if(confirm('One more?')){    
                     this.setNextRound();
                 }
+                this.resetControll();
             }, 1000)
         }
     }
@@ -390,9 +494,10 @@ class Constructor{
             panel.innerHTML = '';
 
             panel.appendChild(this.addIElement( 'Round: ' + this.game.round ));
-            
-            panel.appendChild(this.addIElement( this.player.gun.name + ' | ' + this.player.gun.ammo ));
-            
+            panel.appendChild(this.addIElement( 'Weapon: ' + this.weapon.ammo + ' | ' + this.weapon.fullAmmo ));
+            panel.appendChild(this.addIElement( 'Rate: ' + this.weapon.rateOfFire/1000 ));
+            panel.appendChild(this.addIElement( 'Speed: ' + this.player.speed.toFixed(1) ));
+            panel.appendChild(this.addIElement( 'Kills: ' + this.game.kills ));
             panel.appendChild(this.addIElement( 'Enemies: ' + this.game.enemiesQty ));
         }
     }
@@ -415,14 +520,14 @@ class Constructor{
         this.setInterface();
 
         this.game.roundStart = true;
-
+        
         return canvas.getContext("2d");
     }
-
 }
 
 var d = new Constructor; // RELEASE class
 let ctx = d.init();
+//ctx.globalCompositeOperation = 'destination-over';
 
 //============================== MOVE
 function keyDownHandler(e)
@@ -455,7 +560,7 @@ function mouseDownHandler(e){
     
     if(e.which == 1){
         d.setBullet(mouseX,mouseY);
-        if( d.player.gun.auto ){
+        if( d.weapon.auto ){
             shooting = setInterval(()=>{
                 d.setBullet(mouseX,mouseY);
             }, 100 )
@@ -480,6 +585,7 @@ function draw(){
     d.trecks(ctx);
     d.enemies(ctx);
     d.shoot(ctx);
+    d.loot(ctx);
     d.setPlayer(ctx);
     d.weaponReload();
 }
