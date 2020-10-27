@@ -10,18 +10,23 @@ class Constructor{
         indY: (window.innerHeight - 700)/2, // определение координат клика
     }
     game = {
-        enemiesQty: 10,
-        enemyColor: 'black',
-        group: 10,
-        enemySpeed: 30, // bonus in sec
-        enemyHealth: 1,
-        enemySpamTime: 1000,
-        treckColor: "rgba(212,0,0,0.5)",
-        timer: new Date().getTime(),
-        round: 1,
-        roundStart: false,
-        setBonusAt: 10,
-        kills: 0,
+        enemyColor: 'black',        // Базовый цвет врагов
+        group: 20,                  // --- кол-во врагов
+        enemiesQty: 20,             // кол-во врагов (в начале равно базовому)
+        enemyIndex: .5,             // --- индекс прироста кол-ва врагов
+        enemySpeed: 30,             // --- скорость движения врагов
+        enemyHealth: 1,             // --- здоровье врагов
+        enemySpamTime: 1000,        // --- скорость спавна врагов
+        enemyPoint: 1,              // --- кол-во очков за врагов
+        treckColor: "#c15959",      // --- цвет останков
+        timer: new Date().getTime(),// таймер
+        round: 1,                   // Порядковый номер раунда
+        roundStart: false,          // Отметка начала раунда
+        setBonusAt: 50,             // --- кол-во убитых врагов для получения очка характеристик
+        kills: 0,                   // Всего убийств за игру
+        freeScore: 0,               // Кол-во очков характеристик
+        pause: false,               // Статус паузы
+        shooting: '',               // Статус стрельбы (для автоматического огня)
     }
     player = {
         speed: 2, // pix per sec
@@ -45,6 +50,7 @@ class Constructor{
         reload: false,      // Статус перезарядки
         reloadTime: 1000,   // Время перезарядки
         reloadStart: 0,     // Таймер расчёта перезарядки
+        speed: 1500,        // Скорость полёта снаряда
     }
     objects = {
         bullets: [],
@@ -54,17 +60,23 @@ class Constructor{
     }
     bonus = {
         speed: {
-            name: 'movespeed',
+            now: 'this.player.speed',
+            title: 'Скорость',
+            name: 'speed',
             num: 0.1,
             src: './image/loot/boot.svg',
         },
-        fullAmmo: {
-            name: 'fullammo',
+        ammo: {
+            now: 'this.weapon.fullAmmo',
+            title: 'Боезапас',
+            name: 'ammo',
             num: 1,
             src: './image/loot/bullet.svg',
         },
         rateOfFire: {
-            name: 'rateoffire',
+            now: 'this.weapon.rateOfFire',
+            title: 'Скорострельность',
+            name: 'rateOfFire',
             num: 50,
             src: './image/loot/rateoffire.svg',
         }
@@ -208,17 +220,17 @@ class Constructor{
         let startY = this.player.pos.y;
         let vectorX = x - this.bord.indX;
         let vectorY = y - this.bord.indY;
-        let speed = 1000;
+        let speed = this.weapon.speed;
         let speedX = startX - vectorX;
         let speedY = startY - vectorY;
         // Добавляем пульку
-        let bullet = [ startX, startY, -speedX, -speedY, speed ];
+        let bullet = [ startX, startY, -speedX, -speedY, speed, startX, startY ];
         this.objects.bullets.push(bullet);
         // Отмечаем время выстрела
         this.weapon.rateOfFireTimer = new Date().getTime();
     }
 
-    checkEnemyHit(x,y){
+    checkEnemyHit(x,y,st){
         let action = false;
         let die = {};
         let damage = this.weapon.damage;
@@ -235,7 +247,7 @@ class Constructor{
             }
         })
         if(action == 'die'){
-            this.setTreck(die.x, die.y);
+            this.setTreck(die.x, die.y, st);
             this.checkRoundEnd();
             return true;
         }
@@ -247,35 +259,46 @@ class Constructor{
         }
     }
 
-    moveBullets(){
+    moveBullets(st){
         this.objects.bullets.forEach((b,ind,obj) => {
             let step = this.getStep( b[0],b[1],b[2]*1000,b[3]*1000,b[4] );
             let newX = b[0] += step.x;
             let newY = b[1] += step.y;
-            
+            // b[5] += step.x * 0.3;
+            // b[6] += step.y * 0.3;
+            // Удаляем снаряды за зоной видимости
             if(newX < -100 || newX > this.bord.width + 100 || newY < -100 || newY > this.bord.height + 100){
                 obj.splice(ind,1);
             }
             else{
-                if( this.checkEnemyHit(b[0],b[1],ind,obj) )
+                if( this.checkEnemyHit(b[0],b[1],st) )
                     obj.splice(ind,1);
             }
         })
     }
 
-    shoot(ctx){
-        this.moveBullets();
+    shoot(ctx, st){
+        this.moveBullets(st);
         this.objects.bullets.forEach(b => {
+            // Снаряд
+            var gradient = ctx.createLinearGradient(b[5],b[6], b[0],b[1]);
+            gradient.addColorStop(0, 'rgba(255,255,255,0.1)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0.7)');
             ctx.beginPath();
             ctx.arc(
                 b[0],
                 b[1],
-                3,
+                2,
                 0,
                 Math.PI*2, false
             );
             ctx.fillStyle = "black";
             ctx.fill();
+            ctx.moveTo( b[5], b[6] );
+            
+            ctx.lineTo( b[0], b[1] );
+            ctx.strokeStyle = gradient;
+            ctx.stroke();
             ctx.closePath();
         });
     }
@@ -345,30 +368,17 @@ class Constructor{
     }
 
     //======================================== TRECKS
-    setTreck(x,y){
+    setTreck(x,y,st){
         this.game.kills++;
         if( this.game.kills % this.game.setBonusAt == 0 && this.game.kills !== 0 ){
-            this.addLoot(x,y);
+            //this.addLoot(x,y);
+            this.game.freeScore += this.game.enemyPoint;
         }
-        else{
-            this.objects.trecks.push([x,y]);
-        }
-    }
-
-    trecks(ctx){
-        this.objects.trecks.forEach(t => {
-            ctx.beginPath();
-            ctx.arc(
-                t[0],
-                t[1],
-                20,
-                0,
-                Math.PI*2, false
-            );
-            ctx.fillStyle = this.game.treckColor;
-            ctx.fill();
-            ctx.closePath();
-        })
+        let image = new Image(50, 50);
+        image.src = './image/treck.png';
+        image.onload = () => {
+            st.drawImage(image, Math.floor(x) - 24, Math.floor(y) - 24, 50, 50);
+        }   
     }
 
     // ============================================== LOOT && BONUSES
@@ -392,12 +402,12 @@ class Constructor{
         let bonus = false;
         
         this.objects.loot.forEach((l,ind,obj) => {
-            if( px < l.posX + 30 && px > l.posX && py < l.posY + 30 && py > l.posY ){
+            if( px < l.posX + 15 && px > l.posX - 15 && py < l.posY + 15 && py > l.posY - 15 ){
                 obj.splice(ind,1);
                 bonus = l.obj;
             }
             else{
-                let image = new Image(30, 30);
+                let image = new Image(24, 24);
                 image.src = l.obj.src;
                 
                 // ctx.shadowColor = '333';
@@ -407,9 +417,9 @@ class Constructor{
                 ctx.strokeStyle = '#555';
                 ctx.beginPath();
                 ctx.arc(
-                    l.posX + 15,
-                    l.posY + 15,
-                    20,
+                    l.posX,
+                    l.posY,
+                    15,
                     0,
                     Math.PI*2, false
                 );
@@ -418,7 +428,7 @@ class Constructor{
                 ctx.closePath();
                 ctx.stroke();
                 
-                ctx.drawImage(image, l.posX, l.posY, 30, 30);
+                ctx.drawImage(image, l.posX - 12, l.posY - 12, 24, 24);
             }
         })
 
@@ -427,15 +437,15 @@ class Constructor{
         }
     }
 
-    setBonus(bonus){
-        if( bonus.name == 'movespeed' ){
-            this.player.speed += bonus.num;
+    setBonus(bonus, mod){
+        if( bonus.name == 'speed' ){
+            this.player.speed += bonus.num * mod;
         }
-        else if( bonus.name == 'fullammo' ){
-            this.weapon.fullAmmo += bonus.num;
+        else if( bonus.name == 'ammo' ){
+            this.weapon.fullAmmo += bonus.num * mod;
         }
-        else if( bonus.name == 'rateoffire' ){
-            this.weapon.rateOfFire -= bonus.num;
+        else if( bonus.name == 'rateOfFire' ){
+            this.weapon.rateOfFire -= bonus.num * mod;
         }
     }
 
@@ -445,8 +455,8 @@ class Constructor{
         let catY = endY - startY;
         let gip = Math.sqrt(catX**2 + catY**2);
         let res = {
-            x: catX / gip / 60 * speed,
-            y: catY / gip / 60 * speed
+            x: catX / gip / 50 * speed,
+            y: catY / gip / 50 * speed
         }
         return res;
     }
@@ -455,19 +465,58 @@ class Constructor{
         ctx.clearRect(0, 0, this.bord.width, this.bord.height);
     }
 
+    pause(){
+        let draw = '';
+        let func = () => { this.displayPlayerOptions() };
+        if( this.game.pause ){
+            clearInterval(draw);
+            this.game.pause = false;
+            this.playerOptions.style.display = 'none';
+            this.gameScene.classList.remove('pause');
+        }
+        else{
+            this.game.pause = true;
+            this.playerOptions.style.display = 'flex';
+            this.gameScene.classList.add('pause');
+            draw = setInterval(function(){
+                func();
+            }, 200)
+        }
+        clearInterval(this.game.shooting);
+    }
+    
     checkRoundEnd(){
         if(this.objects.enemies.length === 0){
             setTimeout(() => {
-                if(confirm('One more?')){    
-                    this.setNextRound();
-                }
+                this.confirmContinue();
                 this.resetControll();
             }, 1000)
         }
     }
 
+    confirmContinue(){
+        let wrap = document.createElement('div');
+        wrap.id = "cc__wrap";
+        
+        let html = '';
+        html += '<p class="round-title">Раунд '+ this.game.round +'<p>';
+        html += '<button id="cc__continue">Продолжить</button>';
+        html += '<p class="free-score-notice">Неиспользованные очки: '+ this.game.freeScore +'</p>';
+        wrap.innerHTML = html;
+
+        this.gameScene.appendChild(wrap)
+        this.gameScene.classList.add('pause');
+    }
+
+    confirmGameContinue(){
+        let ccWrap = document.getElementById('cc__wrap');
+        ccWrap.remove();
+        this.gameScene.classList.remove('pause');
+        this.setNextRound();
+    }
+    
     setNextRound(){
-        this.game.enemiesQty = this.game.group = this.game.group*2;
+        this.game.enemiesQty = this.game.group = this.game.group*this.game.enemyIndex;
         this.game.timer = new Date().getTime();
         this.game.enemySpeed += 1;
         this.game.enemySpamTime -= 50;
@@ -494,21 +543,78 @@ class Constructor{
             panel.innerHTML = '';
 
             panel.appendChild(this.addIElement( 'Round: ' + this.game.round ));
-            panel.appendChild(this.addIElement( 'Weapon: ' + this.weapon.ammo + ' | ' + this.weapon.fullAmmo ));
+            panel.appendChild(this.addIElement( 'Ammo: ' + this.weapon.ammo + ' | ' + this.weapon.fullAmmo ));
             panel.appendChild(this.addIElement( 'Rate: ' + this.weapon.rateOfFire/1000 ));
+            panel.appendChild(this.addIElement( 'Damage: ' + this.weapon.damage ));
             panel.appendChild(this.addIElement( 'Speed: ' + this.player.speed.toFixed(1) ));
             panel.appendChild(this.addIElement( 'Kills: ' + this.game.kills ));
             panel.appendChild(this.addIElement( 'Enemies: ' + this.game.enemiesQty ));
         }
     }
 
+    displayPlayerOptions(){
+        const po = this.playerOptions;
+        po.innerHTML = '';
+        const options = this.bonus;
+
+        let freeScore = document.createElement('div');
+        freeScore.id = 'free-score';
+        freeScore.innerText = this.game.freeScore;
+        po.appendChild(freeScore);
+
+        for( let option in options ){
+            let data = options[option];
+            let wrap = document.createElement('div');
+            wrap.classList.add('player-option-wrap');
+            wrap.innerHTML = this.setPlayerOptionLine(data);
+            po.appendChild(wrap);
+        }
+    }
+
+    setPlayerOptionLine(data){
+        let line = '<img src="'+ data.src +'">';
+        line += data.title + ': <div class="player-option__controlls">';
+        line += eval(data.now).toFixed(1);
+        line += '<span data-option="' + data.name + '" data-mod="-1">-</span>';
+        line += '<span data-option="' + data.name + '" data-mod="1">+</span>';
+        line += '</div>';
+
+        return line;
+    }
+
+    setPlayerOption(e){
+        const option = e.target.dataset.option;
+        const mod = e.target.dataset.mod;
+        
+        if(this.game.freeScore <= 0 && mod > 0) return;
+        
+        this.setBonus(this.bonus[option], mod);
+        
+        if( mod < 0 ){
+            this.game.freeScore++;
+        }
+        else{
+            this.game.freeScore--;
+        }
+    }
+
     init(){
-        const gameScene = document.getElementById('game');
+        this.gameScene = document.getElementById('game');
+        this.playerOptions = document.getElementById('options');
+        this.playerConfirm = document.getElementById('confirm');
+
+        const staticBord = document.createElement("canvas");
+        staticBord.id = 'static';
+        staticBord.width = this.bord.width;
+        staticBord.height = staticBord.width;
+        this.gameScene.appendChild(staticBord); 
+        this.setPlayerPos(this.bord.width/2, this.bord.height/2);
+
         const canvas = document.createElement("canvas");
         canvas.id = 'bord';
         canvas.width = this.bord.width;
         canvas.height = canvas.width;
-        gameScene.appendChild(canvas); 
+        this.gameScene.appendChild(canvas); 
         this.setPlayerPos(this.bord.width/2, this.bord.height/2);
 
         document.addEventListener("keydown", keyDownHandler, false);
@@ -520,34 +626,43 @@ class Constructor{
         this.setInterface();
 
         this.game.roundStart = true;
-        
-        return canvas.getContext("2d");
+
+        let table = {
+            ctx: canvas.getContext("2d"),
+            static: staticBord.getContext("2d"),
+        }
+        return table;
     }
 }
 
 var d = new Constructor; // RELEASE class
-let ctx = d.init();
-//ctx.globalCompositeOperation = 'destination-over';
+let table = d.init();
+let ctx = table.ctx;
+let st = table.static;
 
-//============================== MOVE
+//ctx.globalCompositeOperation = 'source-over';
+
+//============================== BUTTONS
 function keyDownHandler(e)
 {    
-    if(e.key == 'w'){d.setControllUp(true);}
-    if(e.key == 'a'){d.setControllLeft(true);}
-    if(e.key == 's'){d.setControllDown(true);}
-    if(e.key == 'd'){d.setControllRight(true);}
+    if     (e.keyCode == '87' || e.keyCode == '38'){d.setControllUp(true);}    // w || arrow
+    else if(e.keyCode == '65' || e.keyCode == '37'){d.setControllLeft(true);}  // a || arrow
+    else if(e.keyCode == '83' || e.keyCode == '40'){d.setControllDown(true);}  // s || arrow
+    else if(e.keyCode == '68' || e.keyCode == '39'){d.setControllRight(true);} // d || arrow
+    else if(e.keyCode == '82'){/*.....................*/} // r
+    else if(e.keyCode == '27'){/*.....................*/} // esc
+    else if(e.keyCode == '32'){d.pause();}                // space
 }
 
 function keyUpHandler(e)
 {
-    if(e.key == 'w'){d.setControllUp(false);}
-    if(e.key == 'a'){d.setControllLeft(false);}
-    if(e.key == 's'){d.setControllDown(false);}
-    if(e.key == 'd'){d.setControllRight(false);}
+    if     (e.keyCode == '87'){d.setControllUp(false);}    // w
+    else if(e.keyCode == '65'){d.setControllLeft(false);}  // a
+    else if(e.keyCode == '83'){d.setControllDown(false);}  // s
+    else if(e.keyCode == '68'){d.setControllRight(false);} // d
 }
 
 //================================ SHOOT
-var shooting;
 var mouseX;
 var mouseY;
 function onmouseMoveHandler(e){
@@ -555,39 +670,58 @@ function onmouseMoveHandler(e){
     mouseY = e.clientY;
 }
 function mouseDownHandler(e){
-    if( !e.target.closest('canvas') )
-        return;
-    
-    if(e.which == 1){
-        d.setBullet(mouseX,mouseY);
-        if( d.weapon.auto ){
-            shooting = setInterval(()=>{
-                d.setBullet(mouseX,mouseY);
-            }, 100 )
-        }
-        else{
+    e.preventDefault();
+    // Следим за кликом только на поле
+    if( e.target.closest('canvas') ){
+        // ЛКМ
+        if(e.which == 1){
+            // Выстрел
             d.setBullet(mouseX,mouseY);
+            if( d.weapon.auto ){
+                d.game.shooting = setInterval(()=>{
+                    d.setBullet(mouseX,mouseY);
+                }, 100 )
+            }
+            else{
+                d.setBullet(mouseX,mouseY);
+            }
+        }
+    }
+    if(e.target.closest('#options')){
+        if(e.which == 1){
+            // Выбор опций во время паузы
+            if( e.target.closest('[data-mod]') ){
+                d.setPlayerOption(e);
+            }
+        }
+    }
+    if(e.target.id == 'cc__continue'){
+        if(e.which == 1){
+            d.confirmGameContinue();
         }
     }
 }
 function mouseUpHandler(e){
+    // Следим за кликом только на поле
     if( !e.target.closest('canvas') )
         return;
+    // ЛКМ
     if(e.which == 1){
-        clearInterval(shooting);
+        clearInterval(d.game.shooting);
     }
 }
 
 //============================== DRAW
 function draw(){
+    if( d.game.pause ) return;
+
     d.updateInterface();
     d.clearBord(ctx);
-    d.trecks(ctx);
     d.enemies(ctx);
-    d.shoot(ctx);
+    d.shoot(ctx,st);
     d.loot(ctx);
     d.setPlayer(ctx);
     d.weaponReload();
 }
 
-setInterval(draw, 1000/60);
+setInterval(draw, 1000/50);
