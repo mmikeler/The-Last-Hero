@@ -171,3 +171,23 @@ button{
     font-size: 14px;
     cursor: pointer;
 }
+
+/* CONTROLLS */
+#stick-wrapper{
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    width: 100px;
+    height: 100px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+}
+#stick{
+    position: absolute;
+    top: calc(50% - 15%);
+    left: calc(50% - 15%);
+    width: 30%;
+    height: 30%;
+    background-color: #fff;
+    border-radius: 50%;
+}

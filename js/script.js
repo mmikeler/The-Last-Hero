@@ -13,7 +13,7 @@ class Constructor{
         enemyColor: 'black',        // Базовый цвет врагов
         group: 20,                  // --- кол-во врагов
         enemiesQty: 20,             // кол-во врагов (в начале равно базовому)
-        enemyIndex: .5,             // --- индекс прироста кол-ва врагов
+        enemyIndex: 1.5,            // --- индекс прироста кол-ва врагов
         enemySpeed: 30,             // --- скорость движения врагов
         enemyHealth: 1,             // --- здоровье врагов
         enemySpamTime: 1000,        // --- скорость спавна врагов
@@ -519,7 +519,7 @@ class Constructor{
         this.game.enemiesQty = this.game.group = this.game.group*this.game.enemyIndex;
         this.game.timer = new Date().getTime();
         this.game.enemySpeed += 1;
-        this.game.enemySpamTime -= 50;
+        this.game.enemySpamTime -= 100;
         this.game.round += 1;
     }
 
@@ -529,6 +529,7 @@ class Constructor{
         var panel = document.createElement('div');
         panel.id = 'interface';
         root.appendChild(panel);
+        this.stick.displayStick();
     }
 
     addIElement(value){
@@ -621,7 +622,7 @@ class Constructor{
         document.addEventListener("keyup", keyUpHandler, false);
         document.addEventListener("mousedown", mouseDownHandler, false);
         document.addEventListener("mouseup", mouseUpHandler, false);
-        canvas.addEventListener("mousemove", onmouseMoveHandler, false);
+        document.addEventListener("mousemove", onmouseMoveHandler, false);
 
         this.setInterface();
 
@@ -632,6 +633,41 @@ class Constructor{
             static: staticBord.getContext("2d"),
         }
         return table;
+    }
+}
+
+Constructor.prototype.stick = {
+
+    el: null,
+    elCenter: 0,
+    drag: false,
+    dragging: false,
+
+    displayStick(){
+        let stickWrapper = document.createElement('div');
+        stickWrapper.id = 'stick-wrapper';
+        let stick = document.createElement('div');
+        stick.id = 'stick';
+        stick.width = '100px';
+        stick.height = '100px';
+        stickWrapper.appendChild(stick);
+        document.getElementById('game').appendChild(stickWrapper);
+
+        this.el = stick;
+        this.elCenter = 100/2;
+    },
+
+    draggingFunc(n) {
+        let stick = n.target.closest('#stick-wrapper');
+        var targetCoords = stick.getBoundingClientRect();
+        let c = targetCoords.width / 2;
+        
+        let x = n.clientX - targetCoords.left;
+        let y = n.clientY - targetCoords.top;
+        let posX = x < c ? 'd.setControllLeft(true)' : 'd.setControllRight(true)';
+        let posY = y < c ? 'd.setControllUp(true)' : 'd.setControllDown(true)';
+        
+        return {x: posX, y: posY}
     }
 }
 
@@ -662,12 +698,22 @@ function keyUpHandler(e)
     else if(e.keyCode == '68'){d.setControllRight(false);} // d
 }
 
-//================================ SHOOT
+//================================ CONTROLLS
 var mouseX;
 var mouseY;
 function onmouseMoveHandler(e){
     mouseX = e.clientX;
     mouseY = e.clientY;
+    // STICK
+    if(e.target.closest('#stick-wrapper') && d.stick.drag ){
+        d.resetControll();
+        let move = d.stick.draggingFunc(e);
+        eval(move.x);
+        eval(move.y);
+    }
+    else if( e.target.closest('#stick-wrapper') && !d.stick.drag ){
+        d.resetControll();
+    }
 }
 function mouseDownHandler(e){
     e.preventDefault();
@@ -687,6 +733,12 @@ function mouseDownHandler(e){
             }
         }
     }
+    // STICK
+    if(e.target.closest('#stick-wrapper')){
+        d.stick.drag = true;
+        d.resetControll();
+    }
+    // OPTIONS
     if(e.target.closest('#options')){
         if(e.which == 1){
             // Выбор опций во время паузы
@@ -708,6 +760,11 @@ function mouseUpHandler(e){
     // ЛКМ
     if(e.which == 1){
         clearInterval(d.game.shooting);
+    }
+    // STICK
+    if(e.target.closest('#stick-wrapper')){
+        d.stick.drag = false;
+        d.resetControll();
     }
 }
 
