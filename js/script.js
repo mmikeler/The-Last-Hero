@@ -12,7 +12,7 @@ class Constructor{
     game = {
         enemyColor: 'black',        // Базовый цвет врагов
         group: 20,                  // --- кол-во врагов
-        enemiesQty: 20,             // кол-во врагов (в начале равно базовому)
+        enemiesQty: 20,             // кол-во врагов (в начале раунда равно базовому)
         enemyIndex: 1.5,            // --- индекс прироста кол-ва врагов
         enemySpeed: 30,             // --- скорость движения врагов
         enemyHealth: 1,             // --- здоровье врагов
@@ -516,7 +516,7 @@ class Constructor{
     }
     
     setNextRound(){
-        this.game.enemiesQty = this.game.group = this.game.group*this.game.enemyIndex;
+        this.game.enemiesQty = this.game.group = (this.game.group*this.game.enemyIndex).toFixed(1);
         this.game.timer = new Date().getTime();
         this.game.enemySpeed += 1;
         this.game.enemySpamTime -= 100;
@@ -754,17 +754,15 @@ function mouseDownHandler(e){
     }
 }
 function mouseUpHandler(e){
-    // Следим за кликом только на поле
-    if( !e.target.closest('canvas') )
-        return;
     // ЛКМ
     if(e.which == 1){
         clearInterval(d.game.shooting);
-    }
-    // STICK
-    if(e.target.closest('#stick-wrapper')){
-        d.stick.drag = false;
-        d.resetControll();
+    
+        // STICK
+        if(e.target.closest('#stick-wrapper')){
+            d.stick.drag = false;
+            d.resetControll();
+        }
     }
 }
 
