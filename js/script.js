@@ -4,10 +4,10 @@ class Constructor{
 
     ctx = '';
     bord = {
-        width: 700,
-        height: 700,
-        indX: (window.innerWidth - 700)/2, // определение координат клика
-        indY: (window.innerHeight - 700)/2, // определение координат клика
+        width: null,
+        height: null,
+        indX: 0, // определение координат клика
+        indY: 0, // определение координат клика
     }
     game = {
         enemyColor: 'black',        // Базовый цвет врагов
@@ -606,15 +606,15 @@ class Constructor{
 
         var staticBord = document.createElement("canvas");
         staticBord.id = 'static';
-        staticBord.width = this.bord.width;
-        staticBord.height = staticBord.width;
+        staticBord.width = this.bord.width = window.innerWidth;
+        staticBord.height = this.bord.height = window.innerHeight;
         this.gameScene.appendChild(staticBord); 
         this.setPlayerPos(this.bord.width/2, this.bord.height/2);
 
         var canvas = document.createElement("canvas");
         canvas.id = 'bord';
         canvas.width = this.bord.width;
-        canvas.height = canvas.width;
+        canvas.height = this.bord.height ;
         this.gameScene.appendChild(canvas); 
         this.setPlayerPos(this.bord.width/2, this.bord.height/2);
 
