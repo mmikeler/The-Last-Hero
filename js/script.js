@@ -128,26 +128,26 @@ class Constructor{
     }
 
     checkCollision(){ // Движение игрока + проверка на столкновения
-        let speed = this.player.speed;
-        let px = this.player.pos.x;
-        let py = this.player.pos.y;
+        var speed = this.player.speed;
+        var px = this.player.pos.x;
+        var py = this.player.pos.y;
         if(this.controlls.top){    
-            let newpos = py - speed;
+            var newpos = py - speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.y = newpos;
         }
         if(this.controlls.bottom){
-            let newpos = py + speed;
+            var newpos = py + speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.y = newpos;
         }
         if(this.controlls.left){
-            let newpos = px - speed;
+            var newpos = px - speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.x = newpos;
         }
         if(this.controlls.right){
-            let newpos = px + speed;
+            var newpos = px + speed;
             if( this.validPlayerPos(false,newpos) )
                 this.player.pos.x = newpos;
         }
@@ -197,7 +197,7 @@ class Constructor{
         }
         else if( this.weapon.ammo === 0 && this.weapon.reload )
         {
-            let now = new Date().getTime();
+            var now = new Date().getTime();
             if( now - this.weapon.reloadStart > this.weapon.reloadTime)
             {
                 this.weapon.ammo = this.weapon.fullAmmo;
@@ -210,30 +210,30 @@ class Constructor{
         if(this.weapon.reload || this.weapon.ammo <= 0)
             return;
         // Проверяем скорострельность
-        let now = new Date().getTime();
+        var now = new Date().getTime();
         if(now - this.weapon.rateOfFireTimer < this.weapon.rateOfFire)
             return;
         // Вычитаем из обоймы
         this.weapon.ammo--;
         // Делаем пульку
-        let startX = this.player.pos.x;
-        let startY = this.player.pos.y;
-        let vectorX = x - this.bord.indX;
-        let vectorY = y - this.bord.indY;
-        let speed = this.weapon.speed;
-        let speedX = startX - vectorX;
-        let speedY = startY - vectorY;
+        var startX = this.player.pos.x;
+        var startY = this.player.pos.y;
+        var vectorX = x - this.bord.indX;
+        var vectorY = y - this.bord.indY;
+        var speed = this.weapon.speed;
+        var speedX = startX - vectorX;
+        var speedY = startY - vectorY;
         // Добавляем пульку
-        let bullet = [ startX, startY, -speedX, -speedY, speed, startX, startY ];
+        var bulvar = [ startX, startY, -speedX, -speedY, speed, startX, startY ];
         this.objects.bullets.push(bullet);
         // Отмечаем время выстрела
         this.weapon.rateOfFireTimer = new Date().getTime();
     }
 
     checkEnemyHit(x,y,st){
-        let action = false;
-        let die = {};
-        let damage = this.weapon.damage;
+        var action = false;
+        var die = {};
+        var damage = this.weapon.damage;
         this.objects.enemies.forEach( function(e,ind,obj){
             if( x > e[0] - 20 && x < e[0] + 20 && y > e[1] - 20 && y < e[1] + 20 ){
                 if( e[4] - damage <= 0 ){
@@ -261,9 +261,9 @@ class Constructor{
 
     moveBullets(st){
         this.objects.bullets.forEach((b,ind,obj) => {
-            let step = this.getStep( b[0],b[1],b[2]*1000,b[3]*1000,b[4] );
-            let newX = b[0] += step.x;
-            let newY = b[1] += step.y;
+            var step = this.getStep( b[0],b[1],b[2]*1000,b[3]*1000,b[4] );
+            var newX = b[0] += step.x;
+            var newY = b[1] += step.y;
             // b[5] += step.x * 0.3;
             // b[6] += step.y * 0.3;
             // Удаляем снаряды за зоной видимости
@@ -305,9 +305,9 @@ class Constructor{
 
     //==================================== ENEMY
     randomEnemyStartPos(){
-        let coords = { x: -60, y: -60 };
-        let rand = Math.floor(Math.random()*this.bord.width);
-        let side = Math.floor(Math.random()*4);
+        var coords = { x: -60, y: -60 };
+        var rand = Math.floor(Math.random()*this.bord.width);
+        var side = Math.floor(Math.random()*4);
         
         if( side === 1 ){
             coords.x = rand;
@@ -327,13 +327,13 @@ class Constructor{
     }
 
     setEnemy(){
-        let random = this.randomEnemyStartPos();
-        let enemy = [ random.x, random.y, 0, 0, this.game.enemyHealth ];
+        var random = this.randomEnemyStartPos();
+        var enemy = [ random.x, random.y, 0, 0, this.game.enemyHealth ];
         this.objects.enemies.push(enemy);
     }
 
     spamEnemy(){
-        let now = new Date().getTime();
+        var now = new Date().getTime();
         if( now - this.game.timer > this.game.enemySpamTime && this.game.enemiesQty > 0 ){
             this.setEnemy();
             this.game.enemiesQty--;
@@ -343,7 +343,7 @@ class Constructor{
 
     moveEnemies(){
         this.objects.enemies.forEach(b => {
-            let step = this.getStep(b[0],b[1],this.player.pos.x,this.player.pos.y,this.game.enemySpeed);
+            var step = this.getStep(b[0],b[1],this.player.pos.x,this.player.pos.y,this.game.enemySpeed);
             b[0] += step.x;
             b[1] += step.y;            
         })
@@ -374,7 +374,7 @@ class Constructor{
             //this.addLoot(x,y);
             this.game.freeScore += this.game.enemyPoint;
         }
-        let image = new Image(50, 50);
+        var image = new Image(50, 50);
         image.src = './image/treck.png';
         image.onload = () => {
             st.drawImage(image, Math.floor(x) - 24, Math.floor(y) - 24, 50, 50);
@@ -383,10 +383,10 @@ class Constructor{
 
     // ============================================== LOOT && BONUSES
     addLoot(x,y){
-        let bonusCount = Object.keys( this.bonus );
-        let randIndex = Math.floor( Math.random()*bonusCount.length );
-        let bonus = this.bonus[bonusCount[randIndex]];
-        let item = {
+        var bonusCount = Object.keys( this.bonus );
+        var randIndex = Math.floor( Math.random()*bonusCount.length );
+        var bonus = this.bonus[bonusCount[randIndex]];
+        var item = {
             posX: x,
             posY: y,
             obj: bonus,
@@ -397,9 +397,9 @@ class Constructor{
     loot(ctx){
         if( this.objects.loot.length <= 0 ) return;
 
-        let px = this.player.pos.x;
-        let py = this.player.pos.y;
-        let bonus = false;
+        var px = this.player.pos.x;
+        var py = this.player.pos.y;
+        var bonus = false;
         
         this.objects.loot.forEach((l,ind,obj) => {
             if( px < l.posX + 15 && px > l.posX - 15 && py < l.posY + 15 && py > l.posY - 15 ){
@@ -407,7 +407,7 @@ class Constructor{
                 bonus = l.obj;
             }
             else{
-                let image = new Image(24, 24);
+                var image = new Image(24, 24);
                 image.src = l.obj.src;
                 
                 // ctx.shadowColor = '333';
@@ -451,10 +451,10 @@ class Constructor{
 
     // Расчёт шага скорости движения объекта
     getStep(startX, startY, endX, endY, speed){
-        let catX = endX - startX;
-        let catY = endY - startY;
-        let gip = Math.sqrt(catX**2 + catY**2);
-        let res = {
+        var catX = endX - startX;
+        var catY = endY - startY;
+        var gip = Math.sqrt(catX**2 + catY**2);
+        var res = {
             x: catX / gip / 50 * speed,
             y: catY / gip / 50 * speed
         }
@@ -466,8 +466,8 @@ class Constructor{
     }
 
     pause(){
-        let draw = '';
-        let func = () => { this.displayPlayerOptions() };
+        var draw = '';
+        var func = () => { this.displayPlayerOptions() };
         if( this.game.pause ){
             clearInterval(draw);
             this.game.pause = false;
@@ -495,10 +495,10 @@ class Constructor{
     }
 
     confirmContinue(){
-        let wrap = document.createElement('div');
+        var wrap = document.createElement('div');
         wrap.id = "cc__wrap";
         
-        let html = '';
+        var html = '';
         html += '<p class="round-title">Раунд '+ this.game.round +'<p>';
         html += '<button id="cc__continue">Продолжить</button>';
         html += '<p class="free-score-notice">Неиспользованные очки: '+ this.game.freeScore +'</p>';
@@ -509,7 +509,7 @@ class Constructor{
     }
 
     confirmGameContinue(){
-        let ccWrap = document.getElementById('cc__wrap');
+        var ccWrap = document.getElementById('cc__wrap');
         ccWrap.remove();
         this.gameScene.classList.remove('pause');
         this.setNextRound();
@@ -525,7 +525,7 @@ class Constructor{
 
     //============================================ INTERFACE
     setInterface(){
-        let root = document.getElementById('game');
+        var root = document.getElementById('game');
         var panel = document.createElement('div');
         panel.id = 'interface';
         root.appendChild(panel);
@@ -533,7 +533,7 @@ class Constructor{
     }
 
     addIElement(value){
-        let el = document.createElement('div');
+        var el = document.createElement('div');
         el.innerHTML = value;
         return el;
     }
@@ -554,18 +554,18 @@ class Constructor{
     }
 
     displayPlayerOptions(){
-        const po = this.playerOptions;
+        var po = this.playerOptions;
         po.innerHTML = '';
-        const options = this.bonus;
+        var options = this.bonus;
 
-        let freeScore = document.createElement('div');
+        var freeScore = document.createElement('div');
         freeScore.id = 'free-score';
         freeScore.innerText = this.game.freeScore;
         po.appendChild(freeScore);
 
-        for( let option in options ){
-            let data = options[option];
-            let wrap = document.createElement('div');
+        for( var option in options ){
+            var data = options[option];
+            var wrap = document.createElement('div');
             wrap.classList.add('player-option-wrap');
             wrap.innerHTML = this.setPlayerOptionLine(data);
             po.appendChild(wrap);
@@ -573,7 +573,7 @@ class Constructor{
     }
 
     setPlayerOptionLine(data){
-        let line = '<img src="'+ data.src +'">';
+        var line = '<img src="'+ data.src +'">';
         line += data.title + ': <div class="player-option__controlls">';
         line += eval(data.now).toFixed(1);
         line += '<span data-option="' + data.name + '" data-mod="-1">-</span>';
@@ -584,8 +584,8 @@ class Constructor{
     }
 
     setPlayerOption(e){
-        const option = e.target.dataset.option;
-        const mod = e.target.dataset.mod;
+        var option = e.target.dataset.option;
+        var mod = e.target.dataset.mod;
         
         if(this.game.freeScore <= 0 && mod > 0) return;
         
@@ -604,14 +604,14 @@ class Constructor{
         this.playerOptions = document.getElementById('options');
         this.playerConfirm = document.getElementById('confirm');
 
-        const staticBord = document.createElement("canvas");
+        var staticBord = document.createElement("canvas");
         staticBord.id = 'static';
         staticBord.width = this.bord.width;
         staticBord.height = staticBord.width;
         this.gameScene.appendChild(staticBord); 
         this.setPlayerPos(this.bord.width/2, this.bord.height/2);
 
-        const canvas = document.createElement("canvas");
+        var canvas = document.createElement("canvas");
         canvas.id = 'bord';
         canvas.width = this.bord.width;
         canvas.height = canvas.width;
@@ -628,7 +628,7 @@ class Constructor{
 
         this.game.roundStart = true;
 
-        let table = {
+        var table = {
             ctx: canvas.getContext("2d"),
             static: staticBord.getContext("2d"),
         }
@@ -644,9 +644,9 @@ Constructor.prototype.stick = {
     dragging: false,
 
     displayStick(){
-        let stickWrapper = document.createElement('div');
+        var stickWrapper = document.createElement('div');
         stickWrapper.id = 'stick-wrapper';
-        let stick = document.createElement('div');
+        var stick = document.createElement('div');
         stick.id = 'stick';
         stick.width = '100px';
         stick.height = '100px';
@@ -658,23 +658,23 @@ Constructor.prototype.stick = {
     },
 
     draggingFunc(n) {
-        let stick = n.target.closest('#stick-wrapper');
+        var stick = n.target.closest('#stick-wrapper');
         var targetCoords = stick.getBoundingClientRect();
-        let c = targetCoords.width / 2;
+        var c = targetCoords.width / 2;
         
-        let x = n.clientX - targetCoords.left;
-        let y = n.clientY - targetCoords.top;
-        let posX = x < c ? 'd.setControllLeft(true)' : 'd.setControllRight(true)';
-        let posY = y < c ? 'd.setControllUp(true)' : 'd.setControllDown(true)';
+        var x = n.clientX - targetCoords.left;
+        var y = n.clientY - targetCoords.top;
+        var posX = x < c ? 'd.setControllLeft(true)' : 'd.setControllRight(true)';
+        var posY = y < c ? 'd.setControllUp(true)' : 'd.setControllDown(true)';
         
         return {x: posX, y: posY}
     }
 }
 
 var d = new Constructor; // RELEASE class
-let table = d.init();
-let ctx = table.ctx;
-let st = table.static;
+var table = d.init();
+var ctx = table.ctx;
+var st = table.static;
 
 //ctx.globalCompositeOperation = 'source-over';
 
@@ -707,7 +707,7 @@ function onmouseMoveHandler(e){
     // STICK
     if(e.target.closest('#stick-wrapper') && d.stick.drag ){
         d.resetControll();
-        let move = d.stick.draggingFunc(e);
+        var move = d.stick.draggingFunc(e);
         eval(move.x);
         eval(move.y);
     }
