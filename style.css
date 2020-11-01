@@ -28,6 +28,7 @@ body{
 
 #game{
     position: relative;
+    display: flex;
 }
 #static{
     background: rgb(162, 233, 114) /*url(./image/backgrounds/0.jpg) repeat center/auto */;
@@ -42,7 +43,7 @@ body{
     align-items: center;
     justify-content: space-between;
     position: absolute;
-    top: -30px;
+    top: 0px;
     left: 0;
     right: -2px;
     border: 1px solid #ddd;
@@ -79,6 +80,7 @@ body{
     align-items: center;
     justify-content: space-between;
     width: 80%;
+    max-width: 600px;
     color: #174791;
 }
 

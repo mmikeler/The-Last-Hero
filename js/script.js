@@ -143,12 +143,12 @@ class Constructor{
         }
         if(this.controlls.left){
             var newpos = px - speed;
-            if( this.validPlayerPos(false,newpos) )
+            if( this.validPlayerPos(newpos,false) )
                 this.player.pos.x = newpos;
         }
         if(this.controlls.right){
             var newpos = px + speed;
-            if( this.validPlayerPos(false,newpos) )
+            if( this.validPlayerPos(newpos,false) )
                 this.player.pos.x = newpos;
         }
     }
