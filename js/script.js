@@ -224,7 +224,7 @@ class Constructor{
         var speedX = startX - vectorX;
         var speedY = startY - vectorY;
         // Добавляем пульку
-        var bulvar = [ startX, startY, -speedX, -speedY, speed, startX, startY ];
+        var bullet = [ startX, startY, -speedX, -speedY, speed, startX, startY ];
         this.objects.bullets.push(bullet);
         // Отмечаем время выстрела
         this.weapon.rateOfFireTimer = new Date().getTime();
